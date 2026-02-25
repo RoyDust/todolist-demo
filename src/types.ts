@@ -5,6 +5,8 @@ export interface Todo {
   text: string
   completed: boolean
   priority: Priority
+  createdAt: number
+  completedAt?: number
 }
 
 export type FilterType = 'all' | 'active' | 'completed'

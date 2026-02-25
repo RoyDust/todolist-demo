@@ -18,6 +18,21 @@ function saveTodos(todos: Todo[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
 }
 
+function formatTime(timestamp: number): string {
+  const now = Date.now()
+  const diff = now - timestamp
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+
+  if (seconds < 60) return '刚刚'
+  if (minutes < 60) return `${minutes} 分钟前`
+  if (hours < 24) return `${hours} 小时前`
+  if (days < 7) return `${days} 天前`
+  return new Date(timestamp).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
 function App() {
   const [todos, setTodos] = useState<Todo[]>(loadTodos)
   const [input, setInput] = useState('')
@@ -38,14 +53,18 @@ function App() {
   const addTodo = () => {
     const text = input.trim()
     if (!text) return
-    setTodos(prev => [...prev, { id: Date.now(), text, completed: false, priority }])
+    setTodos(prev => [...prev, { id: Date.now(), text, completed: false, priority, createdAt: Date.now() }])
     setInput('')
     setPriority('medium')
   }
 
   const toggleTodo = (id: number) => {
     setTodos(prev =>
-      prev.map(t => (t.id === id ? { ...t, completed: !t.completed } : t))
+      prev.map(t =>
+        t.id === id
+          ? { ...t, completed: !t.completed, completedAt: !t.completed ? Date.now() : undefined }
+          : t
+      )
     )
   }
 
@@ -127,7 +146,15 @@ function App() {
                 onChange={() => toggleTodo(todo.id)}
               />
               <span className={`priority-dot priority-${todo.priority}`} />
-              <span className="todo-text">{todo.text}</span>
+              <div className="todo-content">
+                <span className="todo-text">{todo.text}</span>
+                <span className="todo-time">
+                  创建于 {formatTime(todo.createdAt)}
+                  {todo.completed && todo.completedAt && (
+                    <> · 完成于 {formatTime(todo.completedAt)}</>
+                  )}
+                </span>
+              </div>
             </label>
             <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
               ✕
