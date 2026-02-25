@@ -76,6 +76,22 @@ h1 {
   border-color: #667eea;
 }
 
+/* Priority select */
+.priority-select {
+  padding: 10px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  outline: none;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.priority-select:focus {
+  border-color: #667eea;
+}
+
 .add-btn {
   padding: 12px 20px;
   background: linear-gradient(135deg, #667eea, #764ba2);
@@ -176,6 +192,29 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Priority dots */
+.priority-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.priority-high {
+  background: #e53e3e;
+  box-shadow: 0 0 6px rgba(229, 62, 62, 0.4);
+}
+
+.priority-medium {
+  background: #ecc94b;
+  box-shadow: 0 0 6px rgba(236, 201, 75, 0.4);
+}
+
+.priority-low {
+  background: #48bb78;
+  box-shadow: 0 0 6px rgba(72, 187, 120, 0.4);
 }
 
 .todo-list li.completed .todo-text {
@@ -283,4 +322,10 @@ h1 {
 
 [data-theme="dark"] .empty {
   color: #4a5568;
+}
+
+[data-theme="dark"] .priority-select {
+  background: #2d2d44;
+  border-color: #4a5568;
+  color: #e2e8f0;
 }

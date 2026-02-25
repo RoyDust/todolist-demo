@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Todo, FilterType } from './types'
+import type { Todo, FilterType, Priority } from './types'
 import './App.css'
 
 const STORAGE_KEY = 'todolist-demo-todos'
@@ -21,7 +21,9 @@ function saveTodos(todos: Todo[]) {
 function App() {
   const [todos, setTodos] = useState<Todo[]>(loadTodos)
   const [input, setInput] = useState('')
+  const [priority, setPriority] = useState<Priority>('medium')
   const [filter, setFilter] = useState<FilterType>('all')
+  const [sortByPriority, setSortByPriority] = useState(false)
   const [dark, setDark] = useState(() => localStorage.getItem(DARK_MODE_KEY) === 'true')
 
   useEffect(() => {
@@ -36,8 +38,9 @@ function App() {
   const addTodo = () => {
     const text = input.trim()
     if (!text) return
-    setTodos(prev => [...prev, { id: Date.now(), text, completed: false }])
+    setTodos(prev => [...prev, { id: Date.now(), text, completed: false, priority }])
     setInput('')
+    setPriority('medium')
   }
 
   const toggleTodo = (id: number) => {
@@ -55,6 +58,11 @@ function App() {
     if (filter === 'completed') return t.completed
     return true
   })
+
+  const priorityOrder: Record<Priority, number> = { high: 0, medium: 1, low: 2 }
+  const displayTodos = sortByPriority
+    ? [...filteredTodos].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+    : filteredTodos
 
   const activeCount = todos.filter(t => !t.completed).length
 
@@ -75,6 +83,15 @@ function App() {
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addTodo()}
         />
+        <select
+          className="priority-select"
+          value={priority}
+          onChange={e => setPriority(e.target.value as Priority)}
+        >
+          <option value="high">🔴 高</option>
+          <option value="medium">🟡 中</option>
+          <option value="low">🟢 低</option>
+        </select>
         <button className="add-btn" onClick={addTodo}>添加</button>
       </div>
 
@@ -89,13 +106,19 @@ function App() {
           </button>
         ))}
         <span className="count">{activeCount} 项待完成</span>
+        <button
+          className={`filter-btn ${sortByPriority ? 'active' : ''}`}
+          onClick={() => setSortByPriority(s => !s)}
+        >
+          ↕ 优先级排序
+        </button>
       </div>
 
       <ul className="todo-list">
-        {filteredTodos.length === 0 && (
+        {displayTodos.length === 0 && (
           <li className="empty">暂无任务</li>
         )}
-        {filteredTodos.map(todo => (
+        {displayTodos.map(todo => (
           <li key={todo.id} className={todo.completed ? 'completed' : ''}>
             <label className="todo-label">
               <input
@@ -103,6 +126,7 @@ function App() {
                 checked={todo.completed}
                 onChange={() => toggleTodo(todo.id)}
               />
+              <span className={`priority-dot priority-${todo.priority}`} />
               <span className="todo-text">{todo.text}</span>
             </label>
             <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
