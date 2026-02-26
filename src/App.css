@@ -1,151 +1,196 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ===== Design Tokens ===== */
+:root {
+  --bg-gradient-from: #6366f1;
+  --bg-gradient-to: #a855f7;
+  --card-bg: #ffffff;
+  --card-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --border-focus: #6366f1;
+  --input-bg: #f8fafc;
+  --hover-bg: #f1f5f9;
+  --accent: #6366f1;
+  --accent-light: rgba(99,102,241,0.1);
+  --danger: #ef4444;
+  --danger-light: rgba(239,68,68,0.08);
+  --priority-high: #ef4444;
+  --priority-medium: #f59e0b;
+  --priority-low: #22c55e;
+  --radius: 12px;
+  --radius-full: 9999px;
+  --ease: 0.25s cubic-bezier(0.4,0,0.2,1);
 }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--bg-gradient-from), var(--bg-gradient-to));
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  padding: 40px 16px;
+  padding: 48px 20px;
+  transition: background 0.4s ease;
 }
 
-#root {
-  width: 100%;
-  max-width: 520px;
-}
+#root { width: 100%; max-width: 560px; }
 
+/* ===== Card ===== */
 .app {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 36px;
+  box-shadow: var(--card-shadow);
+  transition: background var(--ease), box-shadow var(--ease);
 }
 
+/* ===== Header ===== */
 .header {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   position: relative;
 }
 
 h1 {
-  text-align: center;
-  font-size: 1.8rem;
-  color: #333;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  transition: color var(--ease);
 }
 
 .theme-toggle {
   position: absolute;
   right: 0;
-  background: none;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 1.2rem;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1.15rem;
   cursor: pointer;
-  padding: 6px 10px;
-  transition: all 0.2s;
+  padding: 8px 12px;
+  transition: all var(--ease);
 }
 
 .theme-toggle:hover {
-  border-color: #667eea;
+  border-color: var(--accent);
+  background: var(--accent-light);
+  transform: scale(1.05);
 }
 
-/* Input row */
+/* ===== Input Row ===== */
 .input-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .input-row input {
   flex: 1;
   padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
   outline: none;
-  transition: border-color 0.2s;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  transition: all var(--ease);
 }
 
 .input-row input:focus {
-  border-color: #667eea;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+  background: var(--card-bg);
 }
 
-/* Priority select */
+.input-row input::placeholder {
+  color: var(--text-muted);
+}
+
 .priority-select {
   padding: 10px 12px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 0.9rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
   outline: none;
-  background: #fff;
+  background: var(--input-bg);
+  color: var(--text-primary);
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all var(--ease);
 }
 
 .priority-select:focus {
-  border-color: #667eea;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
 }
 
 .add-btn {
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 12px 22px;
+  background: linear-gradient(135deg, var(--accent), var(--bg-gradient-to));
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 1rem;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
   white-space: nowrap;
+  transition: all var(--ease);
 }
 
 .add-btn:hover {
-  opacity: 0.85;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99,102,241,0.4);
 }
 
-/* Filters */
+.add-btn:active {
+  transform: translateY(0);
+}
+
+/* ===== Filters ===== */
 .filters {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
 .filter-btn {
-  padding: 6px 14px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 20px;
-  background: #fff;
-  color: #666;
-  font-size: 0.85rem;
+  padding: 6px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--ease);
 }
 
 .filter-btn:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
 }
 
 .filter-btn.active {
-  background: #667eea;
-  border-color: #667eea;
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.3);
 }
 
 .count {
   margin-left: auto;
-  font-size: 0.8rem;
-  color: #999;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
-/* Todo list */
+/* ===== Todo List ===== */
 .todo-list {
   list-style: none;
 }
@@ -154,18 +199,16 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  transition: background 0.15s;
-}
-
-.todo-list li:last-child {
-  border-bottom: none;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  transition: all var(--ease);
+  border: 1.5px solid transparent;
 }
 
 .todo-list li:hover {
-  background: #f8fafc;
-  border-radius: 8px;
+  background: var(--hover-bg);
+  border-color: var(--border);
 }
 
 .todo-label {
@@ -181,18 +224,14 @@ h1 {
 .todo-label input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  accent-color: #667eea;
+  accent-color: var(--accent);
   cursor: pointer;
   flex-shrink: 0;
+  transition: transform var(--ease);
 }
 
-.todo-text {
-  font-size: 1rem;
-  color: #333;
-  transition: all 0.2s;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.todo-label input[type="checkbox"]:hover {
+  transform: scale(1.15);
 }
 
 .todo-content {
@@ -202,148 +241,186 @@ h1 {
   flex: 1;
 }
 
-.todo-time {
-  font-size: 0.75rem;
-  color: #a0aec0;
-  margin-top: 2px;
+.todo-text {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  transition: all var(--ease);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Priority dots */
+.todo-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+  transition: color var(--ease);
+}
+
+/* ===== Priority Dots ===== */
 .priority-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+  margin-top: 5px;
+  transition: transform var(--ease);
 }
 
 .priority-high {
-  background: #e53e3e;
-  box-shadow: 0 0 6px rgba(229, 62, 62, 0.4);
+  background: var(--priority-high);
+  box-shadow: 0 0 8px rgba(239,68,68,0.4);
 }
 
 .priority-medium {
-  background: #ecc94b;
-  box-shadow: 0 0 6px rgba(236, 201, 75, 0.4);
+  background: var(--priority-medium);
+  box-shadow: 0 0 8px rgba(245,158,11,0.4);
 }
 
 .priority-low {
-  background: #48bb78;
-  box-shadow: 0 0 6px rgba(72, 187, 120, 0.4);
+  background: var(--priority-low);
+  box-shadow: 0 0 8px rgba(34,197,94,0.4);
 }
 
+/* ===== Completed State ===== */
 .todo-list li.completed .todo-text {
   text-decoration: line-through;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
+.todo-list li.completed .priority-dot {
+  opacity: 0.4;
+}
+
+/* ===== Delete Button ===== */
 .delete-btn {
   background: none;
   border: none;
-  color: #ccc;
+  color: var(--text-muted);
   font-size: 1.1rem;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.2s;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all var(--ease);
   flex-shrink: 0;
+  opacity: 0;
+}
+
+.todo-list li:hover .delete-btn {
+  opacity: 1;
 }
 
 .delete-btn:hover {
-  color: #e53e3e;
-  background: #fff5f5;
+  color: var(--danger);
+  background: var(--danger-light);
+  transform: scale(1.1);
 }
 
+/* ===== Empty State ===== */
 .empty {
   text-align: center;
-  color: #ccc;
-  padding: 32px 0 !important;
+  color: var(--text-muted);
+  padding: 40px 0 !important;
   font-size: 0.95rem;
+  border: none !important;
 }
 
-/* Dark mode */
-[data-theme="dark"] body {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+/* ===== Animations ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-[data-theme="dark"] .app {
-  background: #1e1e2e;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-[data-theme="dark"] h1 {
-  color: #e2e8f0;
+@keyframes cardEntry {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-[data-theme="dark"] .theme-toggle {
-  border-color: #4a5568;
+.app {
+  animation: cardEntry 0.5s cubic-bezier(0.4,0,0.2,1);
 }
 
-[data-theme="dark"] .input-row input {
-  background: #2d2d44;
-  border-color: #4a5568;
-  color: #e2e8f0;
+.todo-list li {
+  animation: fadeInUp 0.3s ease both;
 }
 
-[data-theme="dark"] .input-row input::placeholder {
-  color: #718096;
+.todo-list li:nth-child(1) { animation-delay: 0s; }
+.todo-list li:nth-child(2) { animation-delay: 0.03s; }
+.todo-list li:nth-child(3) { animation-delay: 0.06s; }
+.todo-list li:nth-child(4) { animation-delay: 0.09s; }
+.todo-list li:nth-child(5) { animation-delay: 0.12s; }
+.todo-list li:nth-child(6) { animation-delay: 0.15s; }
+.todo-list li:nth-child(7) { animation-delay: 0.18s; }
+.todo-list li:nth-child(8) { animation-delay: 0.21s; }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] {
+  --bg-gradient-from: #0f172a;
+  --bg-gradient-to: #1e1b4b;
+  --card-bg: #1e293b;
+  --card-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: #334155;
+  --border-focus: #818cf8;
+  --input-bg: #0f172a;
+  --hover-bg: #334155;
+  --accent: #818cf8;
+  --accent-light: rgba(129,140,248,0.12);
+  --danger-light: rgba(239,68,68,0.12);
 }
 
-[data-theme="dark"] .filter-btn {
-  background: #2d2d44;
-  border-color: #4a5568;
-  color: #a0aec0;
-}
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  body { padding: 20px 12px; }
 
-[data-theme="dark"] .filter-btn:hover {
-  border-color: #667eea;
-  color: #667eea;
-}
+  .app { padding: 24px 18px; border-radius: 16px; }
 
-[data-theme="dark"] .filter-btn.active {
-  background: #667eea;
-  border-color: #667eea;
-  color: #fff;
-}
+  h1 { font-size: 1.4rem; }
 
-[data-theme="dark"] .count {
-  color: #718096;
-}
+  .input-row {
+    flex-wrap: wrap;
+  }
 
-[data-theme="dark"] .todo-list li {
-  border-bottom-color: #2d2d44;
-}
+  .input-row input {
+    min-width: 0;
+  }
 
-[data-theme="dark"] .todo-list li:hover {
-  background: #2d2d44;
-}
+  .priority-select {
+    flex: 1;
+  }
 
-[data-theme="dark"] .todo-text {
-  color: #e2e8f0;
-}
+  .add-btn {
+    flex: 1;
+  }
 
-[data-theme="dark"] .todo-list li.completed .todo-text {
-  color: #4a5568;
-}
+  .filters {
+    gap: 6px;
+  }
 
-[data-theme="dark"] .delete-btn {
-  color: #4a5568;
-}
+  .filter-btn {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+  }
 
-[data-theme="dark"] .delete-btn:hover {
-  color: #fc8181;
-  background: rgba(254, 178, 178, 0.1);
-}
+  .count {
+    width: 100%;
+    text-align: center;
+    margin-left: 0;
+    margin-top: 4px;
+  }
 
-[data-theme="dark"] .empty {
-  color: #4a5568;
-}
+  .todo-list li {
+    padding: 12px;
+  }
 
-[data-theme="dark"] .todo-time {
-  color: #718096;
-}
-
-[data-theme="dark"] .priority-select {
-  background: #2d2d44;
-  border-color: #4a5568;
-  color: #e2e8f0;
+  .delete-btn {
+    opacity: 1;
+  }
 }
