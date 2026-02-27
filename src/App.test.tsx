@@ -2,85 +2,84 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import App from '../src/App'
 
-// Setup for jsdom
 beforeEach(() => {
-  localStorage.clear()
+  window.localStorage.clear()
 })
 
-describe('Todo App', () => {
-  it('renders the app', () => {
+describe('Auth Acceptance', () => {
+  it('allows a new user to register and enter main app', () => {
     render(<App />)
-    expect(screen.getByText('Todo List')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '立即注册' }))
+    fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'alice' } })
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'alice123' } })
+    fireEvent.click(screen.getByRole('button', { name: '注册' }))
+
+    expect(screen.getByText('alice')).toBeInTheDocument()
+    expect(screen.getByLabelText('退出登录')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('添加新任务...')).toBeInTheDocument()
   })
 
-  it('can add a new todo', () => {
+  it('shows error when registering duplicate username', () => {
     render(<App />)
 
-    const input = screen.getByPlaceholderText('添加新任务...')
-    const addButton = screen.getByText('添加')
+    fireEvent.click(screen.getByRole('button', { name: '立即注册' }))
+    fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'bob' } })
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'bob12345' } })
+    fireEvent.click(screen.getByRole('button', { name: '注册' }))
 
-    fireEvent.change(input, { target: { value: 'Test task' } })
-    fireEvent.click(addButton)
+    fireEvent.click(screen.getByLabelText('退出登录'))
+    fireEvent.click(screen.getByRole('button', { name: '立即注册' }))
+    fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'bob' } })
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'another1' } })
+    fireEvent.click(screen.getByRole('button', { name: '注册' }))
 
-    expect(screen.getByText('Test task')).toBeInTheDocument()
+    expect(screen.getByText('用户名已被注册')).toBeInTheDocument()
   })
 
-  it('can toggle a todo', () => {
+  it('allows existing user to log in after logout', () => {
     render(<App />)
 
-    const input = screen.getByPlaceholderText('添加新任务...')
-    const addButton = screen.getByText('添加')
+    fireEvent.click(screen.getByRole('button', { name: '立即注册' }))
+    fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'charlie' } })
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'charlie1' } })
+    fireEvent.click(screen.getByRole('button', { name: '注册' }))
 
-    fireEvent.change(input, { target: { value: 'Toggle test' } })
-    fireEvent.click(addButton)
+    fireEvent.click(screen.getByLabelText('退出登录'))
+    fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'charlie' } })
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'charlie1' } })
+    fireEvent.click(screen.getByRole('button', { name: '登录' }))
 
-    const checkboxes = screen.getAllByRole('checkbox')
-    const checkbox = checkboxes[0]
-    expect(checkbox).not.toBeChecked()
-
-    fireEvent.click(checkbox)
-    expect(checkbox).toBeChecked()
+    expect(screen.getByText('charlie')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('添加新任务...')).toBeInTheDocument()
   })
 
-  it('can delete a todo', () => {
+  it('rejects login with wrong password', () => {
     render(<App />)
 
-    const input = screen.getByPlaceholderText('添加新任务...')
-    const addButton = screen.getByText('添加')
+    fireEvent.click(screen.getByRole('button', { name: '立即注册' }))
+    fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'diana' } })
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'diana11' } })
+    fireEvent.click(screen.getByRole('button', { name: '注册' }))
+    fireEvent.click(screen.getByLabelText('退出登录'))
 
-    fireEvent.change(input, { target: { value: 'Delete test' } })
-    fireEvent.click(addButton)
+    fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'diana' } })
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'wrong99' } })
+    fireEvent.click(screen.getByRole('button', { name: '登录' }))
 
-    expect(screen.getByText('Delete test')).toBeInTheDocument()
-
-    const deleteBtn = screen.getByLabelText('删除 Delete test')
-    fireEvent.click(deleteBtn)
-
-    expect(screen.queryByText('Delete test')).not.toBeInTheDocument()
+    expect(screen.getByText('用户名或密码错误')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('添加新任务...')).not.toBeInTheDocument()
   })
 
-  it('can filter todos', () => {
+  it('validates required fields and minimum password length', () => {
     render(<App />)
 
-    // Add two todos
-    const input = screen.getByPlaceholderText('添加新任务...')
-    const addButton = screen.getByText('添加')
+    fireEvent.click(screen.getByRole('button', { name: '登录' }))
+    expect(screen.getByText('请输入用户名和密码')).toBeInTheDocument()
 
-    fireEvent.change(input, { target: { value: 'Task 1' } })
-    fireEvent.click(addButton)
-
-    fireEvent.change(input, { target: { value: 'Task 2' } })
-    fireEvent.click(addButton)
-
-    // Toggle first todo
-    const checkboxes = screen.getAllByRole('checkbox')
-    fireEvent.click(checkboxes[0])
-
-    // Filter completed
-    const completedBtn = screen.getByText('已完成')
-    fireEvent.click(completedBtn)
-
-    expect(screen.queryByText('Task 1')).toBeInTheDocument()
-    expect(screen.queryByText('Task 2')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'eva' } })
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: '12345' } })
+    fireEvent.click(screen.getByRole('button', { name: '登录' }))
+    expect(screen.getByText('密码至少需要 6 位')).toBeInTheDocument()
   })
 })

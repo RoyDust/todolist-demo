@@ -1,9 +1,40 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import type { Todo, FilterType, Priority } from './types'
+import type { Todo, FilterType, Priority, User } from './types'
 import './App.css'
 
 const STORAGE_KEY = 'todolist-demo-todos'
 const DARK_MODE_KEY = 'todolist-demo-dark-mode'
+const USERS_KEY = 'todolist-demo-users'
+const CURRENT_USER_KEY = 'todolist-demo-current-user'
+const ENCRYPTION_SALT = 'todolist-demo-salt-v1'
+
+// 简单密码加密 - 使用 base64 编码 (实际应用中应使用 bcrypt 等)
+function encryptPassword(password: string): string {
+  const salted = password + ENCRYPTION_SALT
+  return btoa(unescape(encodeURIComponent(salted)))
+}
+
+function decryptPassword(encrypted: string): string {
+  try {
+    const decoded = decodeURIComponent(escape(atob(encrypted)))
+    return decoded.replace(ENCRYPTION_SALT, '')
+  } catch {
+    return ''
+  }
+}
+
+function loadUsers(): User[] {
+  try {
+    const raw = localStorage.getItem(USERS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveUsers(users: User[]) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users))
+}
 
 function loadTodos(): Todo[] {
   try {
@@ -126,6 +157,14 @@ const IconUpload = () => (
   </svg>
 )
 
+const IconLogOut = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+)
+
 function App() {
   const [todos, setTodos] = useState<Todo[]>(loadTodos)
   const [input, setInput] = useState('')
@@ -135,6 +174,52 @@ function App() {
   const [dark, setDark] = useState(() => localStorage.getItem(DARK_MODE_KEY) === 'true')
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingText, setEditingText] = useState('')
+
+  // Auth state
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const raw = localStorage.getItem(CURRENT_USER_KEY)
+    return raw ? JSON.parse(raw) : null
+  })
+  const [users, setUsers] = useState<User[]>(loadUsers)
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
+  const [authUsername, setAuthUsername] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+
+  // Initialize todos from localStorage based on current user
+  const [initialized, setInitialized] = useState(false)
+  useEffect(() => {
+    if (!initialized) {
+      const allTodos = loadTodos()
+      if (currentUser) {
+        setTodos(allTodos.filter(t => t.userId === currentUser.username))
+      }
+      setInitialized(true)
+    }
+  }, [currentUser, initialized])
+
+  // Save current user to localStorage
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser))
+    }
+  }, [currentUser])
+
+  // Save users to localStorage
+  useEffect(() => {
+    saveUsers(users)
+  }, [users])
+
+  // Save todos to localStorage (all todos, not just current user's)
+  useEffect(() => {
+    if (!initialized) return
+    const allTodos = loadTodos()
+    if (currentUser) {
+      // Replace current user's todos
+      const otherTodos = allTodos.filter(t => t.userId !== currentUser.username)
+      saveTodos([...otherTodos, ...todos])
+    }
+  }, [todos, currentUser, initialized])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
@@ -174,12 +259,13 @@ function App() {
   }, [])
 
   const addTodo = useCallback(() => {
+    if (!currentUser) return
     const text = input.trim()
     if (!text) return
-    setTodos(prev => [...prev, { id: Date.now(), text, completed: false, priority, createdAt: Date.now() }])
+    setTodos(prev => [...prev, { id: Date.now(), text, completed: false, priority, createdAt: Date.now(), userId: currentUser.username }])
     setInput('')
     setPriority('medium')
-  }, [input, priority])
+  }, [input, priority, currentUser])
 
   const toggleTodo = useCallback((id: number) => {
     setTodos(prev =>
@@ -273,20 +359,130 @@ function App() {
 
   const priorityLabels: Record<Priority, string> = useMemo(() => ({ high: '高', medium: '中', low: '低' }), [])
 
-  return (
+  // Auth handlers
+  const handleAuth = useCallback(() => {
+    setAuthError('')
+    if (!authUsername.trim() || !authPassword.trim()) {
+      setAuthError('请输入用户名和密码')
+      return
+    }
+    if (authPassword.length < 6) {
+      setAuthError('密码至少需要 6 位')
+      return
+    }
+    
+    if (authMode === 'register') {
+      if (users.find(u => u.username === authUsername.trim())) {
+        setAuthError('用户名已被注册')
+        return
+      }
+      const encryptedPassword = encryptPassword(authPassword)
+      const newUser: User = { username: authUsername.trim(), password: encryptedPassword }
+      setUsers(prev => [...prev, newUser])
+      setCurrentUser(newUser)
+      setTodos([])
+    } else {
+      const user = users.find(u => {
+        const decrypted = decryptPassword(u.password)
+        return u.username === authUsername.trim() && decrypted === authPassword
+      })
+      if (!user) {
+        setAuthError('用户名或密码错误')
+        return
+      }
+      setCurrentUser(user)
+    }
+    setAuthUsername('')
+    setAuthPassword('')
+  }, [authUsername, authPassword, authMode, users])
+
+  const handleLogout = useCallback(() => {
+    setCurrentUser(null)
+    localStorage.removeItem(CURRENT_USER_KEY)
+    setTodos([])
+  }, [])
+
+  const toggleAuthMode = useCallback(() => {
+    setAuthMode(m => m === 'login' ? 'register' : 'login')
+    setAuthError('')
+  }, [])
+
+  // Render auth form
+  const renderAuthForm = () => (
+    <div className="auth-card">
+      <div className="auth-header">
+        <IconClipboard />
+        <h1>Todo List</h1>
+      </div>
+      <h2 className="auth-title">{authMode === 'login' ? '欢迎回来' : '创建账号'}</h2>
+      <p className="auth-subtitle">{authMode === 'login' ? '登录以管理您的待办事项' : '注册一个新账号开始使用'}</p>
+      
+      <form className="auth-form" onSubmit={(e) => { e.preventDefault(); handleAuth() }}>
+        <div className="auth-input-group">
+          <label htmlFor="auth-username">用户名</label>
+          <input
+            id="auth-username"
+            type="text"
+            value={authUsername}
+            onChange={e => setAuthUsername(e.target.value)}
+            placeholder="输入用户名"
+            autoComplete="username"
+          />
+        </div>
+        
+        <div className="auth-input-group">
+          <label htmlFor="auth-password">密码</label>
+          <input
+            id="auth-password"
+            type="password"
+            value={authPassword}
+            onChange={e => setAuthPassword(e.target.value)}
+            placeholder="输入密码"
+            autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
+          />
+        </div>
+        
+        {authError && <div className="auth-error">{authError}</div>}
+        
+        <button type="submit" className="auth-submit">
+          {authMode === 'login' ? '登录' : '注册'}
+        </button>
+      </form>
+      
+      <p className="auth-switch">
+        {authMode === 'login' ? '还没有账号？' : '已有账号？'}
+        <button type="button" onClick={toggleAuthMode}>
+          {authMode === 'login' ? '立即注册' : '立即登录'}
+        </button>
+      </p>
+    </div>
+  )
+
+  // Render main app
+  const renderMainApp = () => (
     <div className="app">
       <div className="header">
         <div className="header-title">
           <IconClipboard />
           <h1>Todo List</h1>
         </div>
-        <button
-          className="theme-toggle"
-          onClick={() => setDark(d => !d)}
-          aria-label={dark ? '切换到亮色模式' : '切换到暗色模式'}
-        >
-          {dark ? <IconSun /> : <IconMoon />}
-        </button>
+        <div className="header-actions">
+          <span className="user-greeting">{currentUser?.username}</span>
+          <button
+            className="logout-btn"
+            onClick={handleLogout}
+            aria-label="退出登录"
+          >
+            <IconLogOut />
+          </button>
+          <button
+            className="theme-toggle"
+            onClick={() => setDark(d => !d)}
+            aria-label={dark ? '切换到亮色模式' : '切换到暗色模式'}
+          >
+            {dark ? <IconSun /> : <IconMoon />}
+          </button>
+        </div>
       </div>
 
       {stats.totalCount > 0 && (
@@ -421,6 +617,12 @@ function App() {
           </li>
         ))}
       </ul>
+    </div>
+  )
+
+  return (
+    <div className="app-container">
+      {!currentUser ? renderAuthForm() : renderMainApp()}
     </div>
   )
 }
