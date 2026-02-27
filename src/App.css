@@ -318,6 +318,24 @@ h1 {
   font-weight: 500;
 }
 
+.import-export {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.import-export .filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+}
+
+.import-export .filter-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* ===== Todo List ===== */
 .todo-list {
   list-style: none;
@@ -433,6 +451,54 @@ h1 {
 .priority-medium { background: var(--priority-medium); }
 .priority-low { background: var(--priority-low); }
 
+/* ===== Todo Actions ===== */
+.todo-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--ease);
+}
+
+.todo-item:hover .todo-actions {
+  opacity: 1;
+}
+
+.todo-item:focus-within .todo-actions {
+  opacity: 1;
+}
+
+/* ===== Edit Button ===== */
+.edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--ease);
+  flex-shrink: 0;
+}
+
+.edit-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.edit-btn:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.edit-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* ===== Delete Button ===== */
 .delete-btn {
   display: flex;
@@ -445,7 +511,6 @@ h1 {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  opacity: 0;
   transition: all var(--ease);
   flex-shrink: 0;
 }
@@ -455,19 +520,82 @@ h1 {
   height: 16px;
 }
 
-.todo-item:hover .delete-btn {
-  opacity: 1;
-}
-
 .delete-btn:hover {
   background: var(--danger-light);
   color: var(--danger);
 }
 
 .delete-btn:focus-visible {
-  opacity: 1;
   outline: 2px solid var(--danger);
   outline-offset: 2px;
+}
+
+/* ===== Edit Form ===== */
+.edit-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  background: var(--card-solid-bg);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.edit-input:focus {
+  border-color: var(--accent-hover);
+}
+
+.edit-save-btn,
+.edit-cancel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--ease);
+  flex-shrink: 0;
+}
+
+.edit-save-btn {
+  background: var(--accent);
+  color: #fff;
+}
+
+.edit-save-btn:hover {
+  background: var(--accent-hover);
+}
+
+.edit-cancel-btn {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.edit-cancel-btn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.edit-save-btn svg,
+.edit-cancel-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.todo-item.editing {
+  background: var(--hover-bg);
 }
 
 /* ===== Empty State ===== */

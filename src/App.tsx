@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { Todo, FilterType, Priority } from './types'
 import './App.css'
 
@@ -89,6 +89,43 @@ const IconCheck = () => (
   </svg>
 )
 
+const IconEdit = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+)
+
+const IconSave = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+    <polyline points="17 21 17 13 7 13 7 21" />
+    <polyline points="7 3 7 8 15 8" />
+  </svg>
+)
+
+const IconX = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+)
+
+const IconDownload = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+)
+
+const IconUpload = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+)
+
 function App() {
   const [todos, setTodos] = useState<Todo[]>(loadTodos)
   const [input, setInput] = useState('')
@@ -96,6 +133,8 @@ function App() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [sortByPriority, setSortByPriority] = useState(false)
   const [dark, setDark] = useState(() => localStorage.getItem(DARK_MODE_KEY) === 'true')
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingText, setEditingText] = useState('')
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
@@ -106,15 +145,43 @@ function App() {
     saveTodos(todos)
   }, [todos])
 
-  const addTodo = () => {
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMod = e.metaKey || e.ctrlKey
+
+      // Ctrl/Cmd + D: Toggle dark mode
+      if (isMod && e.key === 'd') {
+        e.preventDefault()
+        setDark(d => !d)
+      }
+
+      // Ctrl/Cmd + K: Focus input
+      if (isMod && e.key === 'k') {
+        e.preventDefault()
+        document.querySelector<HTMLInputElement>('.input-row input')?.focus()
+      }
+
+      // Ctrl/Cmd + Shift + C: Clear completed
+      if (isMod && e.shiftKey && e.key === 'C') {
+        e.preventDefault()
+        setTodos(prev => prev.filter(t => !t.completed))
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const addTodo = useCallback(() => {
     const text = input.trim()
     if (!text) return
     setTodos(prev => [...prev, { id: Date.now(), text, completed: false, priority, createdAt: Date.now() }])
     setInput('')
     setPriority('medium')
-  }
+  }, [input, priority])
 
-  const toggleTodo = (id: number) => {
+  const toggleTodo = useCallback((id: number) => {
     setTodos(prev =>
       prev.map(t =>
         t.id === id
@@ -122,29 +189,89 @@ function App() {
           : t
       )
     )
-  }
+  }, [])
 
-  const deleteTodo = (id: number) => {
+  const deleteTodo = useCallback((id: number) => {
     setTodos(prev => prev.filter(t => t.id !== id))
-  }
+  }, [])
 
-  const filteredTodos = todos.filter(t => {
-    if (filter === 'active') return !t.completed
-    if (filter === 'completed') return t.completed
-    return true
-  })
+  const startEdit = useCallback((id: number, text: string) => {
+    setEditingId(id)
+    setEditingText(text)
+  }, [])
 
-  const priorityOrder: Record<Priority, number> = { high: 0, medium: 1, low: 2 }
-  const displayTodos = sortByPriority
-    ? [...filteredTodos].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
-    : filteredTodos
+  const cancelEdit = useCallback(() => {
+    setEditingId(null)
+    setEditingText('')
+  }, [])
 
-  const activeCount = todos.filter(t => !t.completed).length
-  const completedCount = todos.filter(t => t.completed).length
-  const totalCount = todos.length
-  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
+  const saveEdit = useCallback((id: number) => {
+    const text = editingText.trim()
+    if (text) {
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, text } : t))
+    }
+    cancelEdit()
+  }, [editingText, cancelEdit])
 
-  const priorityLabels: Record<Priority, string> = { high: '高', medium: '中', low: '低' }
+  const exportTodos = useCallback(() => {
+    const data = JSON.stringify(todos, null, 2)
+    const blob = new Blob([data], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `todos-${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [todos])
+
+  const importTodos = useCallback(() => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target?.result as string)
+            if (Array.isArray(data)) {
+              setTodos(data)
+            }
+          } catch {
+            alert('导入失败：文件格式不正确')
+          }
+        }
+        reader.readAsText(file)
+      }
+    }
+    input.click()
+  }, [])
+
+  const filteredTodos = useMemo(() => {
+    return todos.filter(t => {
+      if (filter === 'active') return !t.completed
+      if (filter === 'completed') return t.completed
+      return true
+    })
+  }, [todos, filter])
+
+  const displayTodos = useMemo(() => {
+    const priorityOrder: Record<Priority, number> = { high: 0, medium: 1, low: 2 }
+    return sortByPriority
+      ? [...filteredTodos].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+      : filteredTodos
+  }, [filteredTodos, sortByPriority])
+
+  const stats = useMemo(() => {
+    const active = todos.filter(t => !t.completed).length
+    const completed = todos.filter(t => t.completed).length
+    const total = todos.length
+    const progress = total > 0 ? (completed / total) * 100 : 0
+    return { activeCount: active, completedCount: completed, totalCount: total, progress }
+  }, [todos])
+
+  const priorityLabels: Record<Priority, string> = useMemo(() => ({ high: '高', medium: '中', low: '低' }), [])
 
   return (
     <div className="app">
@@ -162,12 +289,12 @@ function App() {
         </button>
       </div>
 
-      {totalCount > 0 && (
+      {stats.totalCount > 0 && (
         <div className="progress-section">
           <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${progress}%` }} />
+            <div className="progress-fill" style={{ width: `${stats.progress}%` }} />
           </div>
-          <span className="progress-text">{completedCount}/{totalCount} 已完成</span>
+          <span className="progress-text">{stats.completedCount}/{stats.totalCount} 已完成</span>
         </div>
       )}
 
@@ -206,7 +333,7 @@ function App() {
             {f === 'all' ? '全部' : f === 'active' ? '进行中' : '已完成'}
           </button>
         ))}
-        <span className="count">{activeCount} 项待完成</span>
+        <span className="count">{stats.activeCount} 项待完成</span>
         <button
           className={`filter-btn sort-btn ${sortByPriority ? 'active' : ''}`}
           onClick={() => setSortByPriority(s => !s)}
@@ -215,6 +342,16 @@ function App() {
           <IconSort />
           <span>排序</span>
         </button>
+        <div className="import-export">
+          <button className="filter-btn" onClick={exportTodos} aria-label="导出数据">
+            <IconDownload />
+            <span>导出</span>
+          </button>
+          <button className="filter-btn" onClick={importTodos} aria-label="导入数据">
+            <IconUpload />
+            <span>导入</span>
+          </button>
+        </div>
       </div>
 
       <ul className="todo-list">
@@ -225,32 +362,62 @@ function App() {
           </li>
         )}
         {displayTodos.map(todo => (
-          <li key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''}`}>
-            <label className="todo-label">
-              <span className="custom-checkbox" role="checkbox" aria-checked={todo.completed}>
+          <li key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''} ${editingId === todo.id ? 'editing' : ''}`}>
+            {editingId === todo.id ? (
+              <div className="edit-form">
                 <input
-                  type="checkbox"
-                  checked={todo.completed}
-                  onChange={() => toggleTodo(todo.id)}
+                  type="text"
+                  className="edit-input"
+                  value={editingText}
+                  onChange={e => setEditingText(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') saveEdit(todo.id)
+                    if (e.key === 'Escape') cancelEdit()
+                  }}
+                  autoFocus
+                  aria-label="编辑任务"
                 />
-                <span className="checkbox-box">
-                  {todo.completed && <IconCheck />}
-                </span>
-              </span>
-              <span className={`priority-dot priority-${todo.priority}`} title={`${priorityLabels[todo.priority]}优先级`} />
-              <div className="todo-content">
-                <span className="todo-text">{todo.text}</span>
-                <span className="todo-time">
-                  创建于 {formatTime(todo.createdAt)}
-                  {todo.completed && todo.completedAt && (
-                    <> · 完成于 {formatTime(todo.completedAt)}</>
-                  )}
-                </span>
+                <button className="edit-save-btn" onClick={() => saveEdit(todo.id)} aria-label="保存">
+                  <IconSave />
+                </button>
+                <button className="edit-cancel-btn" onClick={cancelEdit} aria-label="取消">
+                  <IconX />
+                </button>
               </div>
-            </label>
-            <button className="delete-btn" onClick={() => deleteTodo(todo.id)} aria-label={`删除 ${todo.text}`}>
-              <IconTrash />
-            </button>
+            ) : (
+              <>
+                <label className="todo-label">
+                  <span className="custom-checkbox" role="checkbox" aria-checked={todo.completed}>
+                    <input
+                      type="checkbox"
+                      checked={todo.completed}
+                      onChange={() => toggleTodo(todo.id)}
+                    />
+                    <span className="checkbox-box">
+                      {todo.completed && <IconCheck />}
+                    </span>
+                  </span>
+                  <span className={`priority-dot priority-${todo.priority}`} title={`${priorityLabels[todo.priority]}优先级`} />
+                  <div className="todo-content">
+                    <span className="todo-text">{todo.text}</span>
+                    <span className="todo-time">
+                      创建于 {formatTime(todo.createdAt)}
+                      {todo.completed && todo.completedAt && (
+                        <> · 完成于 {formatTime(todo.completedAt)}</>
+                      )}
+                    </span>
+                  </div>
+                </label>
+                <div className="todo-actions">
+                  <button className="edit-btn" onClick={() => startEdit(todo.id, todo.text)} aria-label={`编辑 ${todo.text}`}>
+                    <IconEdit />
+                  </button>
+                  <button className="delete-btn" onClick={() => deleteTodo(todo.id)} aria-label={`删除 ${todo.text}`}>
+                    <IconTrash />
+                  </button>
+                </div>
+              </>
+            )}
           </li>
         ))}
       </ul>
