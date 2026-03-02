@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { Todo, FilterType, Priority, User, Quadrant } from './types'
 import { useQuadrant } from './hooks'
 import { MatrixView } from './components/MatrixView'
+import { ThemeSelector, useTheme } from './components/ThemeSelector/ThemeSelector'
 import { QUADRANT_INFO, ALL_QUADRANTS } from './types/quadrant'
 import './App.css'
 
@@ -176,6 +177,7 @@ function App() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [sortByPriority, setSortByPriority] = useState(false)
   const [dark, setDark] = useState(() => localStorage.getItem(DARK_MODE_KEY) === 'true')
+  const { theme, setTheme } = useTheme()
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingText, setEditingText] = useState('')
   const [editingQuadrant, setEditingQuadrant] = useState<Quadrant | ''>('')
@@ -521,6 +523,7 @@ function App() {
           >
             <IconLogOut />
           </button>
+          <ThemeSelector currentTheme={theme} onThemeChange={setTheme} />
           <button
             className="theme-toggle"
             onClick={() => setDark(d => !d)}
