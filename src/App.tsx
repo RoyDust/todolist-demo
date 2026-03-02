@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import type { Todo, FilterType, Priority, User } from './types'
+import type { Todo, FilterType, Priority, User, Quadrant } from './types'
+import { useQuadrant } from './hooks'
+import { MatrixView } from './components/MatrixView'
+import { QUADRANT_INFO, ALL_QUADRANTS } from './types/quadrant'
 import './App.css'
 
 const STORAGE_KEY = 'todolist-demo-todos'
@@ -169,11 +172,13 @@ function App() {
   const [todos, setTodos] = useState<Todo[]>(loadTodos)
   const [input, setInput] = useState('')
   const [priority, setPriority] = useState<Priority>('medium')
+  const [quadrant, setQuadrant] = useState<Quadrant | ''>('')
   const [filter, setFilter] = useState<FilterType>('all')
   const [sortByPriority, setSortByPriority] = useState(false)
   const [dark, setDark] = useState(() => localStorage.getItem(DARK_MODE_KEY) === 'true')
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingText, setEditingText] = useState('')
+  const [editingQuadrant, setEditingQuadrant] = useState<Quadrant | ''>('')
 
   // Auth state
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -185,6 +190,16 @@ function App() {
   const [authUsername, setAuthUsername] = useState('')
   const [authPassword, setAuthPassword] = useState('')
   const [authError, setAuthError] = useState('')
+
+  // Quadrant state management
+  const {
+    viewMode,
+    toggleViewMode,
+    selectedQuadrant,
+    setSelectedQuadrant,
+    todosByQuadrant,
+    quadrantStats,
+  } = useQuadrant({ todos })
 
   // Initialize todos from localStorage based on current user
   const [initialized, setInitialized] = useState(false)
@@ -252,6 +267,12 @@ function App() {
         e.preventDefault()
         setTodos(prev => prev.filter(t => !t.completed))
       }
+
+      // Ctrl/Cmd + M: Toggle matrix view
+      if (isMod && e.key === 'm') {
+        e.preventDefault()
+        toggleViewMode()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -262,10 +283,22 @@ function App() {
     if (!currentUser) return
     const text = input.trim()
     if (!text) return
-    setTodos(prev => [...prev, { id: Date.now(), text, completed: false, priority, createdAt: Date.now(), userId: currentUser.username }])
+    const newTodo: Todo = {
+      id: Date.now(),
+      text,
+      completed: false,
+      priority,
+      createdAt: Date.now(),
+      userId: currentUser.username,
+    }
+    if (quadrant) {
+      newTodo.quadrant = quadrant as Quadrant
+    }
+    setTodos(prev => [...prev, newTodo])
     setInput('')
     setPriority('medium')
-  }, [input, priority, currentUser])
+    setQuadrant('')
+  }, [input, priority, quadrant, currentUser])
 
   const toggleTodo = useCallback((id: number) => {
     setTodos(prev =>
@@ -281,23 +314,36 @@ function App() {
     setTodos(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  const startEdit = useCallback((id: number, text: string) => {
-    setEditingId(id)
-    setEditingText(text)
+  const startEdit = useCallback((todo: Todo) => {
+    setEditingId(todo.id)
+    setEditingText(todo.text)
+    setEditingQuadrant(todo.quadrant || '')
   }, [])
 
   const cancelEdit = useCallback(() => {
     setEditingId(null)
     setEditingText('')
+    setEditingQuadrant('')
   }, [])
 
   const saveEdit = useCallback((id: number) => {
     const text = editingText.trim()
     if (text) {
-      setTodos(prev => prev.map(t => t.id === id ? { ...t, text } : t))
+      setTodos(prev => prev.map(t => {
+        if (t.id === id) {
+          const updated = { ...t, text }
+          if (editingQuadrant) {
+            updated.quadrant = editingQuadrant as Quadrant
+          } else {
+            delete updated.quadrant
+          }
+          return updated
+        }
+        return t
+      }))
     }
     cancelEdit()
-  }, [editingText, cancelEdit])
+  }, [editingText, editingQuadrant, cancelEdit])
 
   const exportTodos = useCallback(() => {
     const data = JSON.stringify(todos, null, 2)
@@ -513,6 +559,17 @@ function App() {
           <option value="medium">中</option>
           <option value="low">低</option>
         </select>
+        <select
+          className="quadrant-select"
+          value={quadrant}
+          onChange={e => setQuadrant(e.target.value as Quadrant | '')}
+          aria-label="象限"
+        >
+          <option value="">无象限</option>
+          {ALL_QUADRANTS.map(q => (
+            <option key={q} value={q}>{QUADRANT_INFO[q].label} - {QUADRANT_INFO[q].description}</option>
+          ))}
+        </select>
         <button className="add-btn" onClick={addTodo} aria-label="添加任务">
           <IconPlus />
           <span>添加</span>
@@ -523,10 +580,22 @@ function App() {
         {(['all', 'active', 'completed'] as FilterType[]).map(f => (
           <button
             key={f}
-            className={`filter-btn ${filter === f ? 'active' : ''}`}
-            onClick={() => setFilter(f)}
+            className={`filter-btn ${filter === f && !selectedQuadrant ? 'active' : ''}`}
+            onClick={() => { setFilter(f); setSelectedQuadrant(null) }}
           >
             {f === 'all' ? '全部' : f === 'active' ? '进行中' : '已完成'}
+          </button>
+        ))}
+        {/* Quadrant filter buttons */}
+        {ALL_QUADRANTS.map(q => (
+          <button
+            key={q}
+            className={`filter-btn quadrant-filter ${selectedQuadrant === q ? 'active' : ''}`}
+            style={{ borderColor: QUADRANT_INFO[q].color, color: selectedQuadrant === q ? QUADRANT_INFO[q].color : undefined }}
+            onClick={() => { setSelectedQuadrant(q); setFilter('all') }}
+            title={`${QUADRANT_INFO[q].description} (${quadrantStats[q].active} 待办)`}
+          >
+            {QUADRANT_INFO[q].label}
           </button>
         ))}
         <span className="count">{stats.activeCount} 项待完成</span>
@@ -537,6 +606,14 @@ function App() {
         >
           <IconSort />
           <span>排序</span>
+        </button>
+        <button
+          className={`filter-btn view-toggle-btn ${viewMode === 'matrix' ? 'active' : ''}`}
+          onClick={toggleViewMode}
+          aria-label={viewMode === 'matrix' ? '切换到列表视图' : '切换到矩阵视图'}
+          title="Ctrl+M"
+        >
+          <span>矩阵</span>
         </button>
         <div className="import-export">
           <button className="filter-btn" onClick={exportTodos} aria-label="导出数据">
@@ -550,73 +627,102 @@ function App() {
         </div>
       </div>
 
-      <ul className="todo-list">
-        {displayTodos.length === 0 && (
-          <li className="empty">
-            <IconInbox />
-            <span>{filter === 'all' ? '暂无任务，添加一个吧' : filter === 'active' ? '没有进行中的任务' : '没有已完成的任务'}</span>
-          </li>
-        )}
-        {displayTodos.map(todo => (
-          <li key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''} ${editingId === todo.id ? 'editing' : ''}`}>
-            {editingId === todo.id ? (
-              <div className="edit-form">
-                <input
-                  type="text"
-                  className="edit-input"
-                  value={editingText}
-                  onChange={e => setEditingText(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') saveEdit(todo.id)
-                    if (e.key === 'Escape') cancelEdit()
-                  }}
-                  autoFocus
-                  aria-label="编辑任务"
-                />
-                <button className="edit-save-btn" onClick={() => saveEdit(todo.id)} aria-label="保存">
-                  <IconSave />
-                </button>
-                <button className="edit-cancel-btn" onClick={cancelEdit} aria-label="取消">
-                  <IconX />
-                </button>
-              </div>
-            ) : (
-              <>
-                <label className="todo-label">
-                  <span className="custom-checkbox" role="checkbox" aria-checked={todo.completed}>
-                    <input
-                      type="checkbox"
-                      checked={todo.completed}
-                      onChange={() => toggleTodo(todo.id)}
-                    />
-                    <span className="checkbox-box">
-                      {todo.completed && <IconCheck />}
-                    </span>
-                  </span>
-                  <span className={`priority-dot priority-${todo.priority}`} title={`${priorityLabels[todo.priority]}优先级`} />
-                  <div className="todo-content">
-                    <span className="todo-text">{todo.text}</span>
-                    <span className="todo-time">
-                      创建于 {formatTime(todo.createdAt)}
-                      {todo.completed && todo.completedAt && (
-                        <> · 完成于 {formatTime(todo.completedAt)}</>
-                      )}
-                    </span>
-                  </div>
-                </label>
-                <div className="todo-actions">
-                  <button className="edit-btn" onClick={() => startEdit(todo.id, todo.text)} aria-label={`编辑 ${todo.text}`}>
-                    <IconEdit />
+      {viewMode === 'matrix' ? (
+        <MatrixView
+          todosByQuadrant={todosByQuadrant}
+          onToggle={toggleTodo}
+          onDelete={deleteTodo}
+          onEdit={startEdit}
+        />
+      ) : (
+        <ul className="todo-list">
+          {displayTodos.length === 0 && (
+            <li className="empty">
+              <IconInbox />
+              <span>{filter === 'all' ? '暂无任务，添加一个吧' : filter === 'active' ? '没有进行中的任务' : '没有已完成的任务'}</span>
+            </li>
+          )}
+          {displayTodos.map(todo => (
+            <li key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''} ${editingId === todo.id ? 'editing' : ''}`}>
+              {editingId === todo.id ? (
+                <div className="edit-form">
+                  <input
+                    type="text"
+                    className="edit-input"
+                    value={editingText}
+                    onChange={e => setEditingText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveEdit(todo.id)
+                      if (e.key === 'Escape') cancelEdit()
+                    }}
+                    autoFocus
+                    aria-label="编辑任务"
+                  />
+                  <select
+                    className="edit-quadrant-select"
+                    value={editingQuadrant}
+                    onChange={e => setEditingQuadrant(e.target.value as Quadrant | '')}
+                    aria-label="象限"
+                  >
+                    <option value="">无象限</option>
+                    {ALL_QUADRANTS.map(q => (
+                      <option key={q} value={q}>{QUADRANT_INFO[q].label} - {QUADRANT_INFO[q].description}</option>
+                    ))}
+                  </select>
+                  <button className="edit-save-btn" onClick={() => saveEdit(todo.id)} aria-label="保存">
+                    <IconSave />
                   </button>
-                  <button className="delete-btn" onClick={() => deleteTodo(todo.id)} aria-label={`删除 ${todo.text}`}>
-                    <IconTrash />
+                  <button className="edit-cancel-btn" onClick={cancelEdit} aria-label="取消">
+                    <IconX />
                   </button>
                 </div>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+              ) : (
+                <>
+                  <label className="todo-label">
+                    <span className="custom-checkbox" role="checkbox" aria-checked={todo.completed}>
+                      <input
+                        type="checkbox"
+                        checked={todo.completed}
+                        onChange={() => toggleTodo(todo.id)}
+                      />
+                      <span className="checkbox-box">
+                        {todo.completed && <IconCheck />}
+                      </span>
+                    </span>
+                    <span className={`priority-dot priority-${todo.priority}`} title={`${priorityLabels[todo.priority]}优先级`} />
+                    {todo.quadrant && (
+                      <span
+                        className="quadrant-badge"
+                        style={{ backgroundColor: QUADRANT_INFO[todo.quadrant as Quadrant].color }}
+                        title={QUADRANT_INFO[todo.quadrant as Quadrant].description}
+                      >
+                        {QUADRANT_INFO[todo.quadrant as Quadrant].label}
+                      </span>
+                    )}
+                    <div className="todo-content">
+                      <span className="todo-text">{todo.text}</span>
+                      <span className="todo-time">
+                        创建于 {formatTime(todo.createdAt)}
+                        {todo.completed && todo.completedAt && (
+                          <> · 完成于 {formatTime(todo.completedAt)}</>
+                        )}
+                      </span>
+                    </div>
+                  </label>
+                  <div className="todo-actions">
+                    <button className="edit-btn" onClick={() => startEdit(todo)} aria-label={`编辑 ${todo.text}`}>
+                      <IconEdit />
+                    </button>
+                    <button className="delete-btn" onClick={() => deleteTodo(todo.id)} aria-label={`删除 ${todo.text}`}>
+                      <IconTrash />
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 

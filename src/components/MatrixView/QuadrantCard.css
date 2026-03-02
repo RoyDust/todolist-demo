@@ -1,0 +1,112 @@
+.quadrant-card {
+  background: var(--card-bg, #fff);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.quadrant-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.quadrant-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid;
+}
+
+.quadrant-label {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.quadrant-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.quadrant-count {
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+  margin-top: 4px;
+}
+
+.quadrant-todos {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quadrant-empty {
+  color: var(--text-tertiary, #9ca3af);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 24px 0;
+  font-style: italic;
+}
+
+/* Todo item in quadrant */
+.quadrant-todos .todo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.quadrant-todos .todo-item:hover {
+  background: var(--bg-hover, #f3f4f6);
+}
+
+.quadrant-todos .todo-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.quadrant-todos .todo-text {
+  flex: 1;
+  cursor: pointer;
+  word-break: break-word;
+}
+
+.quadrant-todos .todo-text:hover {
+  color: var(--accent-color, #3b82f6);
+}
+
+.quadrant-todos .delete-btn {
+  opacity: 0;
+  background: none;
+  border: none;
+  color: var(--text-tertiary, #9ca3af);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.quadrant-todos .todo-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.quadrant-todos .delete-btn:hover {
+  color: var(--danger-color, #ef4444);
+}
+
+/* Completed state */
+.quadrant-todos .todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: var(--text-tertiary, #9ca3af);
+}

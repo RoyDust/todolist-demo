@@ -1,0 +1,107 @@
+.matrix-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.matrix-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.matrix-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-primary, #111827);
+}
+
+.matrix-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.matrix-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.matrix-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.matrix-col {
+  min-height: 200px;
+}
+
+/* Responsive: stack on small screens */
+@media (max-width: 640px) {
+  .matrix-row {
+    grid-template-columns: 1fr;
+  }
+
+  .matrix-col {
+    min-height: 150px;
+  }
+}
+
+/* Axis labels */
+.matrix-axis-labels {
+  position: relative;
+  height: 40px;
+  margin-top: 8px;
+}
+
+.matrix-axis-y {
+  position: absolute;
+  left: -40px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.matrix-axis-x {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -30px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.axis-label {
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.axis-label-top {
+  color: var(--danger-color, #ef4444);
+}
+
+.axis-label-bottom {
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.axis-label-left {
+  color: var(--danger-color, #ef4444);
+}
+
+.axis-label-right {
+  color: var(--text-tertiary, #9ca3af);
+}
+
+@media (max-width: 640px) {
+  .matrix-axis-labels {
+    display: none;
+  }
+}

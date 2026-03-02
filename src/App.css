@@ -222,6 +222,25 @@ h1 {
   box-shadow: 0 0 0 3px var(--accent-light);
 }
 
+/* ===== Quadrant Select ===== */
+.quadrant-select {
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--ease);
+}
+
+.quadrant-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
 /* ===== Add Button ===== */
 .add-btn {
   display: flex;
@@ -309,6 +328,21 @@ h1 {
 .sort-btn svg {
   width: 14px;
   height: 14px;
+}
+
+/* ===== Quadrant Filter ===== */
+.quadrant-filter {
+  font-weight: 600;
+}
+
+.quadrant-filter.active {
+  background: var(--card-solid-bg);
+  box-shadow: none;
+}
+
+/* ===== View Toggle ===== */
+.view-toggle-btn {
+  font-weight: 600;
 }
 
 .count {
@@ -451,6 +485,16 @@ h1 {
 .priority-medium { background: var(--priority-medium); }
 .priority-low { background: var(--priority-low); }
 
+/* ===== Quadrant Badge ===== */
+.quadrant-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
 /* ===== Todo Actions ===== */
 .todo-actions {
   display: flex;
@@ -553,6 +597,18 @@ h1 {
 
 .edit-input:focus {
   border-color: var(--accent-hover);
+}
+
+.edit-quadrant-select {
+  padding: 8px 12px;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  background: var(--card-solid-bg);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 3px var(--accent-light);
 }
 
 .edit-save-btn,
@@ -665,7 +721,8 @@ h1 {
     min-width: 0;
   }
 
-  .priority-select {
+  .priority-select,
+  .quadrant-select {
     flex: 0;
   }
 
