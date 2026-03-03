@@ -460,7 +460,7 @@ function App() {
     <div className="auth-card">
       <div className="auth-header">
         <IconClipboard />
-        <h1>Todo List</h1>
+        <h1>四象限 Todo</h1>
       </div>
       <h2 className="auth-title">{authMode === 'login' ? '欢迎回来' : '创建账号'}</h2>
       <p className="auth-subtitle">{authMode === 'login' ? '登录以管理您的待办事项' : '注册一个新账号开始使用'}</p>
@@ -512,7 +512,7 @@ function App() {
       <div className="header">
         <div className="header-title">
           <IconClipboard />
-          <h1>Todo List</h1>
+          <h1>四象限 Todo</h1>
         </div>
         <div className="header-actions">
           <span className="user-greeting">{currentUser?.username}</span>
@@ -570,7 +570,7 @@ function App() {
         >
           <option value="">无象限</option>
           {ALL_QUADRANTS.map(q => (
-            <option key={q} value={q}>{QUADRANT_INFO[q].label} - {QUADRANT_INFO[q].description}</option>
+            <option key={q} value={q}>{QUADRANT_INFO[q].labelZh} ({QUADRANT_INFO[q].descriptionZh})</option>
           ))}
         </select>
         <button className="add-btn" onClick={addTodo} aria-label="添加任务">
@@ -596,9 +596,9 @@ function App() {
             className={`filter-btn quadrant-filter ${selectedQuadrant === q ? 'active' : ''}`}
             style={{ borderColor: QUADRANT_INFO[q].color, color: selectedQuadrant === q ? QUADRANT_INFO[q].color : undefined }}
             onClick={() => { setSelectedQuadrant(q); setFilter('all') }}
-            title={`${QUADRANT_INFO[q].description} (${quadrantStats[q].active} 待办)`}
+            title={`${QUADRANT_INFO[q].descriptionZh} (${quadrantStats[q].active} 待办)`}
           >
-            {QUADRANT_INFO[q].label}
+            {QUADRANT_INFO[q].labelZh}
           </button>
         ))}
         <span className="count">{stats.activeCount} 项待完成</span>
@@ -669,7 +669,7 @@ function App() {
                   >
                     <option value="">无象限</option>
                     {ALL_QUADRANTS.map(q => (
-                      <option key={q} value={q}>{QUADRANT_INFO[q].label} - {QUADRANT_INFO[q].description}</option>
+                      <option key={q} value={q}>{QUADRANT_INFO[q].labelZh} ({QUADRANT_INFO[q].descriptionZh})</option>
                     ))}
                   </select>
                   <button className="edit-save-btn" onClick={() => saveEdit(todo.id)} aria-label="保存">

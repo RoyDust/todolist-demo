@@ -13,13 +13,13 @@
 .matrix-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary);
 }
 
 .matrix-subtitle {
   margin: 4px 0 0;
   font-size: 0.875rem;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
 }
 
 .matrix-grid {

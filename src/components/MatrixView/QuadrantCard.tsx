@@ -20,9 +20,9 @@ export function QuadrantCard({ quadrant, todos, onToggle, onDelete, onEdit }: Qu
     <div className="quadrant-card" data-quadrant={quadrant}>
       <div className="quadrant-header" style={{ borderColor: info.color }}>
         <span className="quadrant-label" style={{ color: info.color }}>
-          {info.label}
+          {info.labelZh}
         </span>
-        <span className="quadrant-description">{info.description}</span>
+        <span className="quadrant-description">{info.descriptionZh}</span>
         <span className="quadrant-count">
           {activeTodos.length} 待办 / {completedTodos.length} 已完成
         </span>
